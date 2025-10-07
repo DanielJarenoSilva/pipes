@@ -2,11 +2,11 @@ NAME = pipex
 
 LIBFT_DIR = ./libft
 
-CFLAGS = -Wall -Wextra -Werror #-fsanitize="address"
-
+CFLAGS = -Wall -Wextra -Werror
 CC = cc
 
 SRCS = pipex.c \
+		pipex_utils.c \
 
 OBJS = $(SRCS:.c=.o)
 
