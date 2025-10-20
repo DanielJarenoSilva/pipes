@@ -6,7 +6,7 @@
 /*   By: djareno <djareno@student.42madrid.com>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/06 15:09:18 by djareno           #+#    #+#             */
-/*   Updated: 2025/10/07 11:39:47 by djareno          ###   ########.fr       */
+/*   Updated: 2025/10/17 10:32:54 by djareno          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,8 @@ char	*find_cmd(char *cmd, char **envp)
 	char	*tmp;
 	int		i;
 
+	if (!cmd || *cmd == '\0')
+		return (NULL);
 	paths = ft_split(get_path(envp), ':');
 	if (!paths)
 		return (NULL);
@@ -57,26 +59,7 @@ char	*find_cmd(char *cmd, char **envp)
 	return (free (tmp), ft_free_matrix(paths), ft_strdup(""));
 }
 
-int	checkcmds(char *cmd1, char *cmd2, char **envp, t_arglist *arglist)
-{
-	cmd1 = find_cmd(cmd1, envp);
-	cmd2 = find_cmd(cmd2, envp);
-	if (!cmd1)
-		ft_putstr_fd("Command not found\n", 2);
-	if (!cmd2 && cmd1)
-	{
-		free(cmd1);
-		free (cmd2);
-		ft_putstr_fd("Command not found\n", 2);
-		arglist->error = 127;
-		return (1);
-	}
-	free(cmd1);
-	free(cmd2);
-	return (1);
-}
-
-t_arglist	*parse_args(int argc, char **argv, char **envp)
+t_arglist	*parse_args(int argc, char **argv)
 {
 	t_arglist	*arglist;
 
@@ -100,7 +83,29 @@ t_arglist	*parse_args(int argc, char **argv, char **envp)
 		arglist->error = 0;
 	arglist->arg1 = ft_split(argv[2], ' ');
 	arglist->arg2 = ft_split(argv[3], ' ');
-	if (checkcmds(arglist->arg1[0], arglist->arg2[0], envp, arglist) == 0)
-		return (freemain(arglist), NULL);
 	return (arglist);
+}
+
+int	outpipe(t_arglist *arglist, char **envp)
+{
+	if (arglist->nooutfile != -1)
+	{
+		dup2(arglist->fd[0], STDIN_FILENO);
+		dup2(arglist->outfile, STDOUT_FILENO);
+		close(arglist->fd[1]);
+		close(arglist->fd[0]);
+		if (!arglist->path2)
+		{
+			ft_putstr_fd("Command not found", 2);
+			ft_putchar_fd('\n', 2);
+			close(arglist->outfile);
+			exit(127);
+		}
+		execve(arglist->path2, arglist->arg2, envp);
+		ft_putstr_fd("Command not found\n", 2);
+		close(arglist->outfile);
+		return (exit(1), 127);
+	}
+	else
+		return (exit(1), 0);
 }
